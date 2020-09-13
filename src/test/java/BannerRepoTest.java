@@ -5,11 +5,12 @@ import banners.db.RequestRepository;
 import banners.model.Banner;
 import banners.model.Category;
 import banners.model.Request;
+import banners.services.BannerService;
+import banners.services.CategoryService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -17,11 +18,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Set;
 
 
 @DataJpaTest
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {Main.class})
+@ContextConfiguration(classes = {Main.class, CategoryService.class, BannerService.class})
 public class BannerRepoTest {
 
     @Autowired
@@ -32,6 +34,9 @@ public class BannerRepoTest {
 
     @Autowired
     private RequestRepository requestRepository;
+
+    @Autowired
+    private CategoryService categoryService;
 
 
     @Test
@@ -96,6 +101,47 @@ public class BannerRepoTest {
         Assert.assertEquals("Saved req time is wrong!", readReq.getDate(), now);
         Assert.assertEquals("Ips don't match!", readReq.getIpAddress(), request.getIpAddress());
 
+    }
+
+    @Test
+    public void testEmptyCategoryDeletion(){
+        Category category = new Category();
+        category.setDeleted(false);
+        category.setName("TestCategory");
+        category.setReqName("SomeReqName");
+        categoryRepository.save(category);
+
+        Set<Long> categoryBannersIds = categoryService.deleteCategory(category);
+
+        Assert.assertTrue("category's banners exist!", categoryBannersIds.isEmpty());
+        Assert.assertTrue("category wasn't deleted!", categoryRepository.getOne(category.getId()).isDeleted());
+    }
+
+    @Test
+    public void testNotEmptyCategoryDeletion(){
+        Category category = new Category();
+        category.setDeleted(false);
+        category.setName("TestCategory");
+        category.setReqName("SomeReqName");
+        categoryRepository.save(category);
+
+
+        Banner banner = new Banner();
+        banner.setName("SomeBannerName");
+        banner.setCategory(category);
+        banner.setContent("SomeBannerContent");
+        banner.setDeleted(false);
+        banner.setPrice(BigDecimal.valueOf(12.6d));
+
+        bannerRepository.save(banner);
+
+        categoryService.deleteCategory(category);
+
+        Set<Long> categoryBannersIds = categoryService.deleteCategory(category);
+
+        Assert.assertEquals("category's banners are missing (or there are extra)!", categoryBannersIds.size(), 1);
+        Assert.assertTrue("wrong banners' ids!", categoryBannersIds.contains(banner.getId()));
+        Assert.assertFalse("category was deleted!", categoryRepository.getOne(category.getId()).isDeleted());
     }
 }
 
