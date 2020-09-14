@@ -10,10 +10,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
+@Transactional
 public class BannerService {
     private BannerRepository bannerRepository;
     private RequestRepository requestRepository;
@@ -59,8 +64,10 @@ public class BannerService {
                 clientData,
                 pageable);
 
+        Banner foundBanner = null;
+
         if(!foundBanners.isEmpty()) {
-            Banner foundBanner = foundBanners.get(0);
+            foundBanner = foundBanners.get(0);
 
             Request newRequest = new Request();
             newRequest.setBanner(foundBanner);
@@ -69,11 +76,8 @@ public class BannerService {
             newRequest.setUserAgent(clientData.userAgent);
 
             requestRepository.save(newRequest);
-
-            return Optional.of(foundBanner);
         }
 
-        return Optional.empty();
-
+        return Optional.ofNullable(foundBanner);
     }
 }

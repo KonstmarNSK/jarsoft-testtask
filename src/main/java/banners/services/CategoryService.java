@@ -4,11 +4,13 @@ import banners.db.CategoryRepository;
 import banners.model.Banner;
 import banners.model.Category;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class CategoryService {
     private CategoryRepository categoryRepository;
     private BannerService bannerService;
