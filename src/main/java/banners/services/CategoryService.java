@@ -43,4 +43,9 @@ public class CategoryService {
 
         return activeBannersIds;
     }
+
+    public Set<Category> getCategoriesByName(String name){
+        return categoryRepository.getCategoryByName(name);
+    }
+
 }

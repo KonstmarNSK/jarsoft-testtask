@@ -38,9 +38,12 @@ public class BannerRepoTest {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private BannerService bannerService;
+
 
     @Test
-    public void testBannerInsertion(){
+    public void testBannerInsertion() {
         Category category = new Category();
         category.setDeleted(false);
         category.setName("TestCategory");
@@ -70,7 +73,7 @@ public class BannerRepoTest {
     }
 
     @Test
-    public void testRequestInsertion(){
+    public void testRequestInsertion() {
         Category category = new Category();
         category.setDeleted(false);
         category.setName("TestCategory");
@@ -104,7 +107,7 @@ public class BannerRepoTest {
     }
 
     @Test
-    public void testEmptyCategoryDeletion(){
+    public void testEmptyCategoryDeletion() {
         Category category = new Category();
         category.setDeleted(false);
         category.setName("TestCategory");
@@ -118,7 +121,7 @@ public class BannerRepoTest {
     }
 
     @Test
-    public void testNotEmptyCategoryDeletion(){
+    public void testNotEmptyCategoryDeletion() {
         Category category = new Category();
         category.setDeleted(false);
         category.setName("TestCategory");
@@ -142,6 +145,75 @@ public class BannerRepoTest {
         Assert.assertEquals("category's banners are missing (or there are extra)!", categoryBannersIds.size(), 1);
         Assert.assertTrue("wrong banners' ids!", categoryBannersIds.contains(banner.getId()));
         Assert.assertFalse("category was deleted!", categoryRepository.getOne(category.getId()).isDeleted());
+    }
+
+    @Test
+    public void testCategorySearch() {
+        Category firstCategory = new Category();
+        firstCategory.setDeleted(false);
+        firstCategory.setName("TestCategory");
+        firstCategory.setReqName("SomeReqName");
+        categoryRepository.save(firstCategory);
+
+        Category secondCategory = new Category();
+        secondCategory.setDeleted(false);
+        secondCategory.setName("SecondTestCategory");
+        secondCategory.setReqName("SomeReqName2");
+        categoryRepository.save(secondCategory);
+
+        Set<Category> categories = categoryService.getCategoriesByName("second");
+
+        Assert.assertEquals("Wrong number of found categories!", categories.size(), 1);
+        Assert.assertTrue("wrong category found!", categories.contains(secondCategory));
+
+    }
+
+    @Test
+    public void testBannerSearch() {
+        Category firstCategory = new Category();
+        firstCategory.setDeleted(false);
+        firstCategory.setName("TestCategory");
+        firstCategory.setReqName("SomeReqName");
+        categoryService.saveCategory(firstCategory);
+
+        Category secondCategory = new Category();
+        secondCategory.setDeleted(false);
+        secondCategory.setName("SecondTestCategory");
+        secondCategory.setReqName("SomeReqName2");
+        categoryService.saveCategory(secondCategory);
+
+        Banner banner = new Banner();
+        banner.setName("SomeBannerName");
+        banner.setCategory(firstCategory);
+        banner.setContent("SomeBannerContent");
+        banner.setDeleted(false);
+        banner.setPrice(BigDecimal.valueOf(12.6d));
+        bannerService.saveBanner(banner);
+
+        Banner secondBanner = new Banner();
+        secondBanner.setName("SecondBannerName");
+        secondBanner.setCategory(secondCategory);
+        secondBanner.setContent("SecondBannerContent");
+        secondBanner.setDeleted(false);
+        secondBanner.setPrice(BigDecimal.valueOf(32.6d));
+        bannerService.saveBanner(secondBanner);
+
+        Banner thirdBanner = new Banner();
+        thirdBanner.setName("ThirdBannerName");
+        thirdBanner.setCategory(secondCategory);
+        thirdBanner.setContent("ThirdBannerContent");
+        thirdBanner.setDeleted(false);
+        thirdBanner.setPrice(BigDecimal.valueOf(22.8d));
+        bannerService.saveBanner(thirdBanner);
+
+        Set<Banner> foundBanners = bannerService.getBannersByName("Third");
+
+        Assert.assertEquals("Wrong number of found banners!", foundBanners.size(), 1);
+        Assert.assertTrue("Wrong banner found!", foundBanners.contains(thirdBanner));
+
+        Banner bannerWithMaxPriceInCategory = bannerService.getMostExpensiveBannerInCategory(secondCategory);
+
+        Assert.assertEquals("Wrong banner found! (expected the most expensive in category)", bannerWithMaxPriceInCategory.getId(), secondBanner.getId());
     }
 }
 
