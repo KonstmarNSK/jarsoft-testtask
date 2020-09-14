@@ -2,6 +2,7 @@ import banners.Main;
 import banners.db.BannerRepository;
 import banners.db.CategoryRepository;
 import banners.db.RequestRepository;
+import banners.dto.ClientData;
 import banners.model.Banner;
 import banners.model.Category;
 import banners.model.Request;
@@ -18,6 +19,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Optional;
 import java.util.Set;
 
 
@@ -211,9 +213,45 @@ public class BannerRepoTest {
         Assert.assertEquals("Wrong number of found banners!", foundBanners.size(), 1);
         Assert.assertTrue("Wrong banner found!", foundBanners.contains(thirdBanner));
 
-        Banner bannerWithMaxPriceInCategory = bannerService.getMostExpensiveBannerInCategory(secondCategory);
+        ClientData clientData = new ClientData("11", "22");
+        Banner bannerWithMaxPriceInCategory = bannerService.getMostExpensiveBannerInCategory(secondCategory, clientData).get();
 
         Assert.assertEquals("Wrong banner found! (expected the most expensive in category)", bannerWithMaxPriceInCategory.getId(), secondBanner.getId());
+    }
+
+    @Test
+    public void testAlreadyShownBanner(){
+        Category firstCategory = new Category();
+        firstCategory.setDeleted(false);
+        firstCategory.setName("TestCategory");
+        firstCategory.setReqName("SomeReqName");
+        categoryService.saveCategory(firstCategory);
+
+        Banner firstBanner = new Banner();
+        firstBanner.setName("SomeBannerName");
+        firstBanner.setCategory(firstCategory);
+        firstBanner.setContent("SomeBannerContent");
+        firstBanner.setDeleted(false);
+        firstBanner.setPrice(BigDecimal.valueOf(12.6d));
+        bannerService.saveBanner(firstBanner);
+
+        Banner secondBanner = new Banner();
+        secondBanner.setName("SecondBannerName");
+        secondBanner.setCategory(firstCategory);
+        secondBanner.setContent("SecondBannerContent");
+        secondBanner.setDeleted(false);
+        secondBanner.setPrice(BigDecimal.valueOf(32.6d));
+        bannerService.saveBanner(secondBanner);
+
+        ClientData clientData = new ClientData("11", "22");
+        Banner firstReadBanner = bannerService.getMostExpensiveBannerInCategory(firstCategory, clientData).get();
+        Banner secondReadBanner = bannerService.getMostExpensiveBannerInCategory(firstCategory, clientData).get();
+        Optional<Banner> thirdReadBanner = bannerService.getMostExpensiveBannerInCategory(firstCategory, clientData);
+
+        Assert.assertEquals("Wrong banner shown!", firstReadBanner, secondBanner);
+        Assert.assertEquals("Wrong banner shown!", secondReadBanner, firstBanner);
+        Assert.assertFalse("Must not be available banners!", thirdReadBanner.isPresent());
+
     }
 }
 

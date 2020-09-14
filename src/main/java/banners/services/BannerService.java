@@ -1,21 +1,26 @@
 package banners.services;
 
 import banners.db.BannerRepository;
+import banners.db.RequestRepository;
+import banners.dto.ClientData;
 import banners.model.Banner;
 import banners.model.Category;
+import banners.model.Request;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class BannerService {
     private BannerRepository bannerRepository;
+    private RequestRepository requestRepository;
 
-    public BannerService(BannerRepository bannerRepository) {
+    public BannerService(BannerRepository bannerRepository, RequestRepository requestRepository) {
         this.bannerRepository = bannerRepository;
+        this.requestRepository = requestRepository;
     }
 
     public void saveBanner(Banner banner) {
@@ -38,13 +43,37 @@ public class BannerService {
         return bannerRepository.getActiveBannersByName(name);
     }
 
-    public Banner getMostExpensiveBannerInCategory(Category category) {
-        Pageable pageable = PageRequest.of(0, 1);
-        pageable.getSort().and(Sort.by("price").descending());
+    /**
+     * Finds banner with given category with highest price.
+     * Doesn't return one banner twice in a day to one user
+     *
+     * @param category category which banner belongs to
+     * @param clientData client's ip address and user agent
+     * @return Optional that contains found banner (or empty optional if nothing's found)
+     */
+    public Optional<Banner> getMostExpensiveBannerInCategory(Category category, ClientData clientData) {
+        Pageable pageable = PageRequest.of(0, 1, Sort.by("price").descending());
 
-        return bannerRepository.getActiveBannersByCategoryWithSorting(
+        List<Banner> foundBanners = bannerRepository.getActiveBannersByCategoryWithSorting(
                 category,
-                pageable)
-                .get(0);
+                clientData,
+                pageable);
+
+        if(!foundBanners.isEmpty()) {
+            Banner foundBanner = foundBanners.get(0);
+
+            Request newRequest = new Request();
+            newRequest.setBanner(foundBanner);
+            newRequest.setDate(Calendar.getInstance().getTime());
+            newRequest.setIpAddress(clientData.address);
+            newRequest.setUserAgent(clientData.userAgent);
+
+            requestRepository.save(newRequest);
+
+            return Optional.of(foundBanner);
+        }
+
+        return Optional.empty();
+
     }
 }

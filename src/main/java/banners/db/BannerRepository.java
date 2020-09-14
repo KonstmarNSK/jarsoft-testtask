@@ -1,5 +1,6 @@
 package banners.db;
 
+import banners.dto.ClientData;
 import banners.model.Banner;
 import banners.model.Category;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -23,9 +25,9 @@ public interface BannerRepository extends JpaRepository<Banner, Long> {
     @Query("SELECT b FROM Banner b WHERE b.deleted=false AND category=:cat")
     Set<Banner> getActiveBannersByCategory(@Param("cat") Category cat);
 
-    // fixme: too slow
-    @Query("SELECT b FROM Banner b WHERE b.deleted=false AND category=:cat")
-    List<Banner> getActiveBannersByCategoryWithSorting(@Param("cat") Category category, Pageable pageable);
+    @Query("SELECT b FROM Banner b WHERE b.deleted=false AND category=:cat AND b NOT IN " +
+            "(SELECT r.banner FROM Request r WHERE r.userAgent=:#{#cl.userAgent} AND r.ipAddress=:#{#cl.address} AND r.date >= CURRENT_DATE)")
+    List<Banner> getActiveBannersByCategoryWithSorting(@Param("cat") Category category, @Param("cl") ClientData clData, Pageable pageable);
 
     @Query("SELECT b FROM Banner b WHERE b.deleted=false AND lower(b.name) like lower(concat('%', :name,'%'))")
     Set<Banner> getActiveBannersByName(@Param("name") String name);
