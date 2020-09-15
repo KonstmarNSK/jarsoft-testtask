@@ -1,8 +1,7 @@
 package banners.services;
 
-import banners.db.BannerRepository;
-import banners.db.RequestRepository;
-import banners.dto.ClientData;
+import banners.repos.BannerRepository;
+import banners.repos.RequestRepository;
 import banners.model.Banner;
 import banners.model.Category;
 import banners.model.Request;
@@ -12,7 +11,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -50,18 +48,19 @@ public class BannerService {
 
     /**
      * Finds banner with given category with highest price.
-     * Doesn't return one banner twice in a day to one user
+     * Doesn't return one banner twice in a day to one user.
+     * Saves given request to the db.
      *
      * @param category category which banner belongs to
-     * @param clientData client's ip address and user agent
+     * @param request request's ip address and user agent
      * @return Optional that contains found banner (or empty optional if nothing's found)
      */
-    public Optional<Banner> getMostExpensiveBannerInCategory(Category category, ClientData clientData) {
+    public Optional<Banner> getMostExpensiveBannerInCategory(Category category, Request request) {
         Pageable pageable = PageRequest.of(0, 1, Sort.by("price").descending());
 
         List<Banner> foundBanners = bannerRepository.getActiveBannersByCategoryWithSorting(
                 category,
-                clientData,
+                request,
                 pageable);
 
         Banner foundBanner = null;
@@ -69,14 +68,9 @@ public class BannerService {
         if(!foundBanners.isEmpty()) {
             foundBanner = foundBanners.get(0);
 
-            Request newRequest = new Request();
-            newRequest.setBanner(foundBanner);
-            newRequest.setDate(Calendar.getInstance().getTime());
-            newRequest.setIpAddress(clientData.address);
-            newRequest.setUserAgent(clientData.userAgent);
-
-            requestRepository.save(newRequest);
+            request.setBanner(foundBanner);
         }
+        requestRepository.save(request);
 
         return Optional.ofNullable(foundBanner);
     }

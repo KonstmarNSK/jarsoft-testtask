@@ -1,6 +1,6 @@
 package banners.services;
 
-import banners.db.CategoryRepository;
+import banners.repos.CategoryRepository;
 import banners.model.Banner;
 import banners.model.Category;
 import org.springframework.stereotype.Service;
@@ -22,6 +22,10 @@ public class CategoryService {
 
     public void saveCategory(Category category){
         categoryRepository.save(category);
+    }
+
+    public Category getCategoryById(Long id){
+        return categoryRepository.getOne(id);
     }
 
     /**
@@ -46,8 +50,8 @@ public class CategoryService {
         return activeBannersIds;
     }
 
-    public Set<Category> getCategoriesByName(String name){
-        return categoryRepository.getCategoryByName(name);
+    public Set<Category> getCategoriesByNameOrReqName(String name){
+        return categoryRepository.getCategoryByNameOrReqName(name);
     }
 
 }

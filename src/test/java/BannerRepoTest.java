@@ -1,14 +1,12 @@
 import banners.Main;
-import banners.db.BannerRepository;
-import banners.db.CategoryRepository;
-import banners.db.RequestRepository;
-import banners.dto.ClientData;
+import banners.repos.BannerRepository;
+import banners.repos.CategoryRepository;
+import banners.repos.RequestRepository;
 import banners.model.Banner;
 import banners.model.Category;
 import banners.model.Request;
 import banners.services.BannerService;
 import banners.services.CategoryService;
-import org.hibernate.SessionFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,7 +15,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.persistence.EntityManagerFactory;
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
@@ -165,7 +162,7 @@ public class BannerRepoTest {
         secondCategory.setReqName("SomeReqName2");
         categoryRepository.save(secondCategory);
 
-        Set<Category> categories = categoryService.getCategoriesByName("second");
+        Set<Category> categories = categoryService.getCategoriesByNameOrReqName("second");
 
         Assert.assertEquals("Wrong number of found categories!", categories.size(), 1);
         Assert.assertTrue("wrong category found!", categories.contains(secondCategory));
@@ -215,8 +212,11 @@ public class BannerRepoTest {
         Assert.assertEquals("Wrong number of found banners!", foundBanners.size(), 1);
         Assert.assertTrue("Wrong banner found!", foundBanners.contains(thirdBanner));
 
-        ClientData clientData = new ClientData("11", "22");
-        Banner bannerWithMaxPriceInCategory = bannerService.getMostExpensiveBannerInCategory(secondCategory, clientData).get();
+        Request newRequest = new Request();
+        newRequest.setDate(Calendar.getInstance().getTime());
+        newRequest.setIpAddress("127.0.0.1");
+        newRequest.setUserAgent("firefox");
+        Banner bannerWithMaxPriceInCategory = bannerService.getMostExpensiveBannerInCategory(secondCategory, newRequest).get();
 
         Assert.assertEquals("Wrong banner found! (expected the most expensive in category)", bannerWithMaxPriceInCategory.getId(), secondBanner.getId());
     }
@@ -245,15 +245,28 @@ public class BannerRepoTest {
         secondBanner.setPrice(BigDecimal.valueOf(32.6d));
         bannerService.saveBanner(secondBanner);
 
-        ClientData clientData = new ClientData("11", "22");
-        Banner firstReadBanner = bannerService.getMostExpensiveBannerInCategory(firstCategory, clientData).get();
-        Banner secondReadBanner = bannerService.getMostExpensiveBannerInCategory(firstCategory, clientData).get();
-        Optional<Banner> thirdReadBanner = bannerService.getMostExpensiveBannerInCategory(firstCategory, clientData);
+        Request newRequest = new Request();
+        newRequest.setDate(Calendar.getInstance().getTime());
+        newRequest.setIpAddress("127.0.0.1");
+        newRequest.setUserAgent("firefox");
+
+        Request secondRequest = new Request();
+        secondRequest.setDate(Calendar.getInstance().getTime());
+        secondRequest.setIpAddress("127.0.0.1");
+        secondRequest.setUserAgent("firefox");
+
+        Request thirdRequest = new Request();
+        thirdRequest.setDate(Calendar.getInstance().getTime());
+        thirdRequest.setIpAddress("127.0.0.1");
+        thirdRequest.setUserAgent("firefox");
+
+        Banner firstReadBanner = bannerService.getMostExpensiveBannerInCategory(firstCategory, newRequest).get();
+        Banner secondReadBanner = bannerService.getMostExpensiveBannerInCategory(firstCategory, secondRequest).get();
+        Optional<Banner> thirdReadBanner = bannerService.getMostExpensiveBannerInCategory(firstCategory, thirdRequest);
 
         Assert.assertEquals("Wrong banner shown!", firstReadBanner, secondBanner);
         Assert.assertEquals("Wrong banner shown!", secondReadBanner, firstBanner);
         Assert.assertFalse("Must not be available banners!", thirdReadBanner.isPresent());
-
     }
 }
 

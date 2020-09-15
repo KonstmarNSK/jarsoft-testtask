@@ -1,6 +1,7 @@
 package banners.model;
 
 import javax.persistence.*;
+import java.beans.Transient;
 import java.math.BigDecimal;
 
 @Entity

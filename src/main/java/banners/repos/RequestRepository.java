@@ -1,4 +1,4 @@
-package banners.db;
+package banners.repos;
 
 import banners.model.Request;
 import org.springframework.data.jpa.repository.JpaRepository;

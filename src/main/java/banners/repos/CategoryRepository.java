@@ -1,4 +1,4 @@
-package banners.db;
+package banners.repos;
 
 import banners.model.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +11,7 @@ import java.util.Set;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    // fixme: too slow
-    @Query("SELECT c FROM Category c WHERE c.deleted=false AND lower(c.name) like lower(concat('%', :name,'%'))")
-    Set<Category> getCategoryByName(@Param("name") String name);
+    @Query("SELECT c FROM Category c WHERE c.deleted=false AND (lower(c.name) like lower(concat('%', :name,'%')) OR " +
+            "lower(c.reqName) like lower(concat('%', :name,'%')))")
+    Set<Category> getCategoryByNameOrReqName(@Param("name") String name);
 }

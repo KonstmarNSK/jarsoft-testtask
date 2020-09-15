@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add banner</title>
+    <link th:href="@{webjars/bootstrap/4.3.1/css/bootstrap.css}" rel="stylesheet"/>
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <form th:action="@{/banner/create}" method="post">
+                <input type="text" name="name"><br/>
+                <input type="text" name="price">
+                <input type="text" name="content">
+                <input type="text" name="categoryId">
+                <input type="submit" value="Ok">
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
